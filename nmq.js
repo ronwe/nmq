@@ -111,10 +111,12 @@ exports.startClient = function(config){
 		,_connected 
 
 	function reConnect(){
+		client = null
 		_connected = false
 		setImmediate(connect)
 	}
 	function connect(){
+		if (_connected) return
 		client = net.connect(config , function() {
 			_connected = true
 			console.log('client connected')
@@ -174,5 +176,10 @@ exports.startClient = function(config){
 		,clean : function(drawer ){
 			writeToServer(wrapMsg('clean' , drawer ))
 		}
+	    ,exit : function(){
+            client.destroy()
+            client = null
+			_connected = false
+        }
 	}
 }

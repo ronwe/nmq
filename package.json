@@ -1,0 +1,31 @@
+{
+  "name": "nmq",
+  "version": "0.0.1",
+  "description": "Message Queue in memory  pure by Node.js ",
+  "preferGlobal": "true",
+  "main": "nmq.js",
+  "bin": {
+    "node-mq": "nmq.js"
+  },
+  "author": "vaal.water",
+  "keywords": [
+    "mq",
+    "pub/sub",
+    "product/consume",
+    "lightest"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ronwe/nmq"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": "*"
+  },
+  "readmeFilename": "README.md",
+  "gitHead": "6d9ecaa9ef39830744076e1b3d3fa76629390e07",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "BSD"
+}
