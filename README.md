@@ -1,43 +1,24 @@
+START SERVER
+example/server.js	
+	
 
-server : 
-
-var nmq = require('./nmq.js')
-
-var s = nmq.startServer({port : 5000})
-var i = 0
-setInterval(function(){
-	s.push('t' , ['server_',i++])
-	s.pub('p','pub_',i++ )
-
-}, 1000)
-
-
-=======
-server :
-
-var nmq = require('./nmq.js')
-
-var s = nmq.startServer({port : 5000}) var i = 0 setInterval(function(){ s.push('t' , ['server',i++]) s.pub('p','pub',i++ )
-
-}, 1000)
+HOW TO PUB/SUB
+example/pub.js
+	client.pub(channel , data) 
+example/sub.js
+	var subId = client.sub(channel ,function(data){
+		  console.log(data)
+	} )
+	client.unSub(channel , subId) //取消某个监听
+	client.unSub(channel )//取消全部监听
 
 
-client:
 
-var nmq = require('./nmq.js')
-
-
-var s = nmq.startClient({port : 5000})
-var i = 0
-s.pull('t' , function(x){
-	console.log('I got it' , x)
-} , {times : true})
-
-s.sub('p' , function(x){
-	console.log('I sub it ' ,x)
-})
-=======
-var s = nmq.startClient({port : 5000}) var i = 0 s.pull('t' , function(x){ console.log('I got it' , x) } , {times : true})
-
-s.sub('p' , function(x){ console.log('I sub it ' ,x) })
+HOW TO PUSH/PULL	
+example/push.js
+	client.push(channel , data)
+example/pull.js
+	client.pull(channel , function(data){
+		    data && console.log('I pull it ' , data)
+	} , {times : true}) //times 拉取次数 true 为永久
 

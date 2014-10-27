@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Message Queue in memory  pure by Node.js ",
   "preferGlobal": "true",
-  "main": "nmq.js",
+  "main": "lib/nmq.js",
   "bin": {
     "node-mq": "nmq.js"
   },
