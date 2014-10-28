@@ -1,6 +1,6 @@
 {
   "name": "nmq",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "Message Queue in memory  pure by Node.js ",
   "preferGlobal": "true",
   "main": "lib/nmq.js",
@@ -27,5 +27,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "license": "BSD"
+  "license": "BSD",
+  "directories": {
+    "example": "examples"
+  }
 }
