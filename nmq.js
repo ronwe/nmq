@@ -1,14 +1,29 @@
 var net = require('net')
 
 
-function unWrapMsg(data){
-	data = data.toString().trim()
-	var _d = data.split(':|:' , 2)
-	_d[1] = _d[1] || ''
-	var p1 = _d[0].trim()
-		,p2 = _d[1].trim()
-		,p3 = data.slice(_d[0].length + _d[1].length + 6).trim()
-	return [p1 , p2 , p3]
+var Readable = require('stream').Readable
+var Writable = require('stream').Writable
+
+
+var msgSpAscii = 8
+	, msgSp = String.fromCharCode(msgSpAscii)
+function unWrapMsg(data , socket , cbk){
+	if (socket.dataLeft) data = Buffer.concat([socket.dataLeft , data]) 
+	var dataStr = data.toString().trim()
+	var dataArr = dataStr.split(msgSp)
+	var dataLeft = dataArr.pop()
+	socket.dataLeft = dataLeft ? new Buffer(dataLeft) : null
+	//console.log(dataArr)
+	//TODO : if body is huge ,we should unshift dataLeft to next body
+
+	dataArr.forEach(function(data){
+		var _d = data.split(':|:' , 2)
+		_d[1] = _d[1] || ''
+		var p1 = _d[0].trim()
+			,p2 = _d[1].trim()
+			,p3 = data.slice(_d[0].length + _d[1].length + 6)
+		cbk( [p1 , p2 , p3])
+	})
 }
 function wrapMsg(p1 , p2 ,p3){
 	if (undefined === p2 || null === p2 ) {
@@ -16,7 +31,7 @@ function wrapMsg(p1 , p2 ,p3){
 		return null 
 	}
 	if (undefined === p3) p3= ''
-	return [p1.toString() , p2.toString() , p3.toString()].join(':|:') + "\n"
+	return [p1.toString() , p2.toString() , p3.toString()].join(':|:') +   msgSp 
 }
 exports.startServer = function(config){
 	var clients = []
@@ -60,20 +75,21 @@ exports.startServer = function(config){
 		//socket.write("Welcome " + socket.name + "\n")
 
 		socket.on('data', function (data) {
-			data = unWrapMsg(data)
-			console.log('from client ' ,data)
-			var act = data[0]
-				,drawer = data[1]
-				,msg = data[2]
-			if (!cmd[act]) return
-			var ret = cmd[act](drawer ,msg ,socket)
-			if (null === ret) return
-			//console.log(act ,msg , ret ,ret && ret.length)
-			//socket.write(wrapMsg('on' + act , JSON.stringify(ret || '') ,msg) )
-			if ('object' == typeof ret){
-				ret = JSON.stringify(ret)
-			}
-			socket.write(wrapMsg('on' + act , ret || ''  ,msg) )
+			//console.log('from client ' ,data , data.toString())
+			unWrapMsg(data , socket , function(data){
+				var act = data[0]
+					,drawer = data[1]
+					,msg = data[2]
+				if (!cmd[act]) return
+				var ret = cmd[act](drawer ,msg ,socket)
+				if (null === ret) return
+				//console.log(act ,msg , ret ,ret && ret.length)
+				//socket.write(wrapMsg('on' + act , JSON.stringify(ret || '') ,msg) )
+				if ('object' == typeof ret){
+					ret = JSON.stringify(ret)
+				}
+				socket.write(wrapMsg('on' + act , ret || ''  ,msg) )
+			})
 			//broadcast(socket.name + "> " + data, socket)
 		})
 
@@ -133,11 +149,12 @@ exports.startClient = function(config){
 			console.log('client connected')
 
 		client.on('data', function(data) {
-			data = unWrapMsg(data)
-			//console.log('from server' , data)
-			var act = data[0]
-			if (!cmd[act]) return
-			cmd[act](data[1] , data[2])
+			unWrapMsg(data, client , function(data){
+				//console.log('from server' , data)
+				var act = data[0]
+				if (!cmd[act]) return
+				cmd[act](data[1] , data[2])
+			})
 		})
 
 
