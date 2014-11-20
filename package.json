@@ -1,6 +1,6 @@
 {
   "name": "nmq",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "node message queue",
   "main": "nmq.js",
   "directories": {

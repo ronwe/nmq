@@ -1,8 +1,6 @@
 var net = require('net')
 
 
-var Readable = require('stream').Readable
-var Writable = require('stream').Writable
 
 
 var msgSpAscii = 8
