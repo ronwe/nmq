@@ -1,2 +1,2 @@
-var nmq = require('../lib/nmq.js')
-nmq.startServer({port : 5000})
+var nmq = require('../nmq.js')
+nmq.startServer({port : 5001})

@@ -1,12 +1,9 @@
 var net = require('net')
 
-
-
-
 var msgSpAscii = 8
 	, msgSp = String.fromCharCode(msgSpAscii)
 function unWrapMsg(data , socket , cbk){
-	if (socket.dataLeft) data = Buffer.concat([socket.dataLeft , data]) 
+	if (socket.dataLeft) data = Buffer.concat([socket.dataLeft , data])
 	var dataStr = data.toString().trim()
 	var dataArr = dataStr.split(msgSp)
 	var dataLeft = dataArr.pop()
@@ -29,8 +26,42 @@ function wrapMsg(p1 , p2 ,p3){
 		return null 
 	}
 	if (undefined === p3) p3= ''
-	return [p1.toString() , p2.toString() , p3.toString()].join(':|:') +   msgSp 
+	return [p1.toString() , p2.toString() , p3.toString()].join(':|:') +   msgSp
 }
+
+exports.proxyPSub = function(config){
+    var clients = []
+    var boot
+	function conn2Server(){
+		boot = net.connect(config ,function(){
+			console.log('connect to server')
+		})
+		boot.on('data', function(data) {
+			for (var i = 0 , j = clients.length ; i < j ; i++ ){
+				clients[i].write(data)
+			}
+		})
+		boot.on('end', reConn) 
+		boot.on('error', reConn) 
+	}
+	function reConn(){
+		console.log('disconnect from server')
+		setImmediate(conn2Server)
+	}
+	conn2Server()
+
+    net.createServer(function (socket) {
+        if (-1 == clients.indexOf(socket)) clients.push(socket)
+        socket.on('data', function (data) {
+            console.log ( 'clients number' , clients.length)
+            boot.write(data)
+        })
+        socket.on('end', function () {
+            clients.splice(clients.indexOf(socket), 1)
+        })
+    }).listen(config.serverPort)
+}
+
 exports.startServer = function(config){
 	var clients = []
 		,msgs = {}
@@ -68,7 +99,7 @@ exports.startServer = function(config){
 	}
 	net.createServer(function (socket) {
 		socket.name = socket.remoteAddress + ":" + socket.remotePort
-		clients.push(socket)
+		if (-1 == clients.indexOf(socket)) clients.push(socket)
 
 		//socket.write("Welcome " + socket.name + "\n")
 
@@ -145,6 +176,7 @@ exports.startClient = function(config){
 		client = net.connect(config , function() {
 			_connected = true
 			console.log('client connected')
+		})
 
 		client.on('data', function(data) {
 			unWrapMsg(data, client , function(data){
@@ -160,7 +192,6 @@ exports.startClient = function(config){
 			console.log('client disconnected')
 			reConnect()
 		})
-		})
 		client.on('error', function(err) {  
 			//console.log('client disconnected' ,err)
 			reConnect()
@@ -169,7 +200,11 @@ exports.startClient = function(config){
 
 	function writeToServer(body){
 		//console.log(body , _cbkOnPull , _cs)
-		_connected && body && client.write(body)
+		if (_connected && body){
+			client.write(body)
+			return true
+		}
+		return false
 	}
 
 	function pull(drawer ,cbk , opt){
@@ -187,10 +222,10 @@ exports.startClient = function(config){
 
 	return {
 		push : function(drawer , msg){
-			writeToServer(wrapMsg('push' , drawer , msg))
+			return writeToServer(wrapMsg('push' , drawer , msg))
 		}
 		,pub : function(drawer , msg){
-			writeToServer(wrapMsg('pub' , drawer , msg))
+			return writeToServer(wrapMsg('pub' , drawer , msg))
 		}
 		,unSub : function(drawer , subId){
 			if (! _cbkOnSub[drawer]) return
@@ -207,7 +242,7 @@ exports.startClient = function(config){
 		}
 		,pull : pull 
 		,clean : function(drawer ){
-			writeToServer(wrapMsg('clean' , drawer ))
+			return writeToServer(wrapMsg('clean' , drawer ))
 		}
 	    ,exit : function(){
             client.destroy()
